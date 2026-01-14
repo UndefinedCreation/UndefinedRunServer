@@ -97,7 +97,7 @@ abstract class AbstractServer : JavaExec() {
         if (runDir == null) {
             runDir = File(project.layout.projectDirectory.asFile, "run${if (versionFolder) "/$minecraftVersion" else ""}/${serverType.name.lowercase()}")
         }
-        pluginDir = File(runDir, "plugins")
+        pluginDir = File(runDir, if (serverType == ServerType.HYTALE) "mods" else "plugins")
         workingDir(runDir!!.path)
     }
 

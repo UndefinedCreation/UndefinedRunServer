@@ -60,7 +60,22 @@ object DownloadLib {
      * @param minecraftVersion The minecraft version target
      */
     fun spigot(folder: File, minecraftVersion: String) =
-        downloadFromUndefinedCreations(folder, minecraftVersion)
+        downloadFromSpigotUndefinedCreations(folder, minecraftVersion)
+
+    /**
+     * This method is used to download hytale jar.
+     *
+     * @param folder The folder to download the jar to
+     */
+    fun hytaleJar(folder: File) =
+        downloadFromHytaleJarUndefinedCreations(folder)
+    /**
+     * This method is used to download hytale assets.
+     *
+     * @param folder The folder to download the jar to
+     */
+    fun hytaleAssets(folder: File) =
+        downloadFromHytaleAssetsUndefinedCreations(folder)
 
     /**
      * This method is used to download Bungeecord proxy.
@@ -157,8 +172,74 @@ object DownloadLib {
      * @param folder The folder to download the jar to
      * @param minecraftVersion The jar version to download
      */
-    private fun downloadFromUndefinedCreations(folder: File, minecraftVersion: String): DownloadResult =
-        downloadFile(folder, "${Repositories.UNDEFINEDCREATIONS_REPO}/spigot-$minecraftVersion.jar", "spigot.jar")
+    private fun downloadFromSpigotUndefinedCreations(folder: File, minecraftVersion: String): DownloadResult =
+        downloadFile(folder, "${Repositories.UNDEFINEDCREATIONS_REPO}/spigotmc/spigot-$minecraftVersion.jar", "spigot.jar")
+
+    /**
+     * This method is used to download file from the UndefinedCreations repository.
+     *
+     * @param folder The folder to download the jar to
+     */
+    private fun downloadFromHytaleJarUndefinedCreations(folder: File): DownloadResult =
+        downloadFile(folder, "${Repositories.UNDEFINEDCREATIONS_REPO}/hytale/HytaleServer.jar", "hytale.jar")
+
+    /**
+     * This method is used to download file from the UndefinedCreations repository.
+     *
+     * @param outputFolder The folder to download the jar to
+     */
+    private fun downloadFromHytaleAssetsUndefinedCreations(outputFolder: File): DownloadResult {
+        val baseUrl = "${Repositories.UNDEFINEDCREATIONS_REPO}/hytale/Assets"
+        val outputFileName = "Assets.zip"
+        val partCount = 5
+        
+        val tempFolder = File(outputFolder, "temp_parts_${System.currentTimeMillis()}")
+        tempFolder.mkdirs()
+        
+        try {
+            // Download all parts in parallel
+            val partFiles = (1..partCount).map { partNumber ->
+                Thread {
+                    val partUrl = "$baseUrl.part$partNumber"
+                    val partFile = File(tempFolder, "Assets.part$partNumber")
+                    
+                    URI(partUrl).toURL().openStream().use { input ->
+                        FileOutputStream(partFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                }
+            }.also { threads ->
+                threads.forEach { it.start() }
+                threads.forEach { it.join() }
+            }.mapIndexed { index, _ -> 
+                File(tempFolder, "Assets.part${index + 1}")
+            }
+            
+            // Merge all parts into final file
+            val outputFile = File(outputFolder, outputFileName)
+            FileOutputStream(outputFile).use { output ->
+                partFiles.forEach { partFile ->
+                    partFile.inputStream().use { input ->
+                        input.copyTo(output)
+                    }
+                }
+            }
+            
+            // Delete temporary part files and folder
+            partFiles.forEach { it.delete() }
+            tempFolder.delete()
+            
+            return DownloadResult(DownloadResultType.SUCCESS, null, outputFile)
+        } catch (exception: Exception) {
+            // Clean up on failure
+            tempFolder.listFiles()?.forEach { it.delete() }
+            tempFolder.delete()
+            
+            return DownloadResult(DownloadResultType.FAILED, exception.message, null)
+        }
+    }
+
 
     /**
      * This method is used to download a file from an url.

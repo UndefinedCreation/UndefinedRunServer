@@ -3,6 +3,7 @@ package com.undefinedcreations.nova
 import com.undefinedcreations.nova.exception.CustomJarNotFoundException
 import com.undefinedcreations.nova.exception.VersionNotFoundException
 import com.undefinedcreations.nova.lib.TaskLib
+import com.undefinedcreations.nova.lib.links.DownloadLib
 import com.undefinedcreations.nova.lib.links.DownloadResult
 import com.undefinedcreations.nova.lib.links.DownloadResultType
 import com.undefinedcreations.nova.lib.links.PluginLib
@@ -149,7 +150,7 @@ abstract class RunServerTask : AbstractServer() {
      * This will run when the task is called
      */
     override fun exec() {
-        if (minecraftVersion == null && serverType != ServerType.CUSTOM) {
+        if (minecraftVersion == null && serverType != ServerType.CUSTOM && serverType != ServerType.HYTALE) {
             val echoVersion = getEchoMinecraftVersion()
             if (echoVersion == null) {
                 logger.error("No minecraft version selected!")
@@ -167,28 +168,49 @@ abstract class RunServerTask : AbstractServer() {
 
         var download: DownloadResult? = null
 
-        if (serverType != ServerType.CUSTOM) {
-            logger.info("Downloading latest jar of type ${serverType.name.lowercase()} version $minecraftVersion...")
-            download = downloadServerJar()
+        when {
+            serverType == ServerType.HYTALE -> {
+                logger.info("Downloading latest jar of type ${serverType.name.lowercase()}...")
+                val assets = DownloadLib.hytaleAssets(workingDir)
+                if (assets.resultType != DownloadResultType.SUCCESS) return logger.error("Failed to download assets ${assets.errorMessage}")
+                download = DownloadLib.hytaleJar(workingDir)
+            }
+            serverType != ServerType.CUSTOM -> {
+                logger.info("Downloading latest jar of type ${serverType.name.lowercase()} version $minecraftVersion...")
+                download = downloadServerJar()
+            }
         }
+
+
 
         if (download == null || download.resultType == DownloadResultType.SUCCESS) {
             setClass(download?.jarFile ?: File(workingDir, customJarName!!))
 
-            val slitVersion = minecraftVersion!!.split(".")
-            val mainVersion = slitVersion[1].toInt()
-            val subVersion = slitVersion.getOrNull(2)?.toIntOrNull() ?: 0
+            val jvmFlags = mutableListOf("-Xmx$allowedRam")
 
-            if (noGui) {
-                if ((mainVersion == 15 && subVersion == 2) || mainVersion > 15) {
-                    args("--nogui")
+            when(serverType) {
+                ServerType.HYTALE -> {
+                    args("--assets", "Assets.zip")
+                }
+                else -> {
+                    val slitVersion = minecraftVersion!!.split(".")
+                    val mainVersion = slitVersion[1].toInt()
+                    val subVersion = slitVersion.getOrNull(2)?.toIntOrNull() ?: 0
+
+                    if (noGui) {
+                        if ((mainVersion == 15 && subVersion == 2) || mainVersion > 15) {
+                            args("--nogui")
+                        }
+                    }
+
+                    if (serverType == ServerType.SPIGOT) jvmFlags.add("-DIReallyKnowWhatIAmDoingISwear")
+                    if (acceptEula) jvmFlags.add("-Dcom.mojang.eula.agree=true")
                 }
             }
 
-            val jvmFlags = mutableListOf("-Xmx$allowedRam")
-            if (serverType == ServerType.SPIGOT) jvmFlags.add("-DIReallyKnowWhatIAmDoingISwear")
-            if (acceptEula) jvmFlags.add("-Dcom.mojang.eula.agree=true")
             setJvmArgs(jvmFlags)
+
+            println(commandLine.joinToString(" "))
 
             super.exec()
         } else {
@@ -200,7 +222,7 @@ abstract class RunServerTask : AbstractServer() {
      * This is checking the server version and if it exists.
      */
     private fun checkServerVersion() {
-        if (serverType == ServerType.CUSTOM) return
+        if (serverType == ServerType.CUSTOM || serverType == ServerType.HYTALE) return
         serverType.versions().let {
             if (minecraftVersion !in it) throw VersionNotFoundException(minecraftVersion!!, it)
         }

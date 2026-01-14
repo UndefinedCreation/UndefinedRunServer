@@ -23,9 +23,6 @@ dependencies {
 }
 
 tasks {
-    shadowJar {
-        archiveFileName.set("plugin.jar")
-    }
     compileKotlin {
         kotlinOptions.jvmTarget = "21"
     }
@@ -33,9 +30,8 @@ tasks {
         options.release.set(21)
     }
     runServer {
-        serverType(ServerType.LEAF)
-        minecraftVersion("1.21.4")
-        acceptMojangEula()
+        serverType(ServerType.HYTALE)
+        inputTask(shadowJar)
     }
 }
 

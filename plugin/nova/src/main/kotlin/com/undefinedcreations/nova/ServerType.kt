@@ -64,6 +64,11 @@ enum class ServerType(val loaderName: String, val proxy: Boolean) {
     LEAF("leaf", false),
 
     /**
+     * Hytale server type. running a the hytale game server.
+     */
+    HYTALE("hytale", false),
+
+    /**
      * Custom server type.
      */
     CUSTOM("CUSTOM", false);
@@ -86,6 +91,10 @@ enum class ServerType(val loaderName: String, val proxy: Boolean) {
             VELOCITY -> DownloadLib.velocity(directory, mcVersion)
             FOLIA -> DownloadLib.folia(directory, mcVersion)
             LEAF -> DownloadLib.leaf(directory, mcVersion)
+            HYTALE -> {
+                DownloadLib.hytaleAssets(directory)
+                DownloadLib.hytaleJar(directory)
+            }
             CUSTOM -> null
         }
 
@@ -104,7 +113,7 @@ enum class ServerType(val loaderName: String, val proxy: Boolean) {
             VELOCITY -> VersionLib.velocity()
             FOLIA -> VersionLib.folia()
             LEAF -> VersionLib.leaf()
-            CUSTOM -> listOf()
+            CUSTOM, HYTALE -> listOf()
         }
 
 }

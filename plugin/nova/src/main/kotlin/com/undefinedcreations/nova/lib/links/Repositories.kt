@@ -13,9 +13,9 @@ object Repositories {
     const val PAPERMC_REPO = "https://api.papermc.io/v2/projects"
 
     /**
-     * The UndefinedCreations repository to download spigotmc
+     * The UndefinedCreations repository to download spigotmc and hytale
      */
-    const val UNDEFINEDCREATIONS_REPO = "https://repo.undefinedcreations.com/server/spigotmc"
+    const val UNDEFINEDCREATIONS_REPO = "https://repo.undefinedcreations.com/server/"
 
     /**
      * The md5 repository to download Bungeecord
