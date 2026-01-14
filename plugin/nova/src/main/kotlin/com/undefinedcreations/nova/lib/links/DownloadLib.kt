@@ -192,12 +192,17 @@ object DownloadLib {
         val baseUrl = "${Repositories.UNDEFINEDCREATIONS_REPO}/hytale/Assets"
         val outputFileName = "Assets.zip"
         val partCount = 5
-        
+
+        val outputFile = File(outputFolder, outputFileName)
+
         val tempFolder = File(outputFolder, "temp_parts_${System.currentTimeMillis()}")
         tempFolder.mkdirs()
-        
+
+        if (outputFile.exists()) return DownloadResult(DownloadResultType.SUCCESS, null, outputFile)
+
+        println("Downloading assets... (This can take a while)")
+
         try {
-            // Download all parts in parallel
             val partFiles = (1..partCount).map { partNumber ->
                 Thread {
                     val partUrl = "$baseUrl.part$partNumber"
@@ -215,9 +220,8 @@ object DownloadLib {
             }.mapIndexed { index, _ -> 
                 File(tempFolder, "Assets.part${index + 1}")
             }
-            
-            // Merge all parts into final file
-            val outputFile = File(outputFolder, outputFileName)
+
+
             FileOutputStream(outputFile).use { output ->
                 partFiles.forEach { partFile ->
                     partFile.inputStream().use { input ->
@@ -225,14 +229,12 @@ object DownloadLib {
                     }
                 }
             }
-            
-            // Delete temporary part files and folder
+
             partFiles.forEach { it.delete() }
             tempFolder.delete()
             
             return DownloadResult(DownloadResultType.SUCCESS, null, outputFile)
         } catch (exception: Exception) {
-            // Clean up on failure
             tempFolder.listFiles()?.forEach { it.delete() }
             tempFolder.delete()
             
