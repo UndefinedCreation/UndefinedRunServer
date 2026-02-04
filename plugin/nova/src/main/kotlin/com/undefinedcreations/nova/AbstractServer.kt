@@ -87,7 +87,6 @@ abstract class AbstractServer : JavaExec() {
 
     protected fun setRunningDir(file: File) = file.also { runDir = it }
     protected fun setClass(file: File): JavaExec = classpath(file.path)
-    protected fun setJvmArgs(args: List<String>): JavaExec = jvmArgs(args)
 
     /**
      * This sets up the `runDir` of JavaExec

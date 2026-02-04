@@ -1,10 +1,9 @@
 import com.undefinedcreations.nova.ServerType
 
 plugins {
-    kotlin("jvm") version "1.9.21"
-    id("com.undefinedcreations.echo") version "0.0.11"
+    kotlin("jvm") version "2.3.0-Beta2"
     id("com.undefinedcreations.nova")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "9.3.1"
 }
 
 group = "com.undefinedcreations"
@@ -16,22 +15,27 @@ repositories {
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven("https://oss.sonatype.org/content/repositories/snapshots")
     maven("https://oss.sonatype.org/content/repositories/central")
+    maven {
+        name = "papermc"
+        url = uri("https://repo.papermc.io/repository/maven-public/")
+    }
 }
 
 dependencies {
-    echo("1.21.4", mojangMappings = true, printDebug = true)
+    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
 }
 
 tasks {
-    compileKotlin {
-        kotlinOptions.jvmTarget = "21"
+    shadowJar {
+        archiveFileName.set("plugin.jar")
     }
     compileJava {
-        options.release.set(21)
+        options.release.set(25)
     }
     runServer {
-        serverType(ServerType.HYTALE)
-        inputTask(shadowJar)
+        serverType(ServerType.PAPERMC)
+        minecraftVersion("1.21.11")
+        acceptMojangEula()
     }
 }
 
@@ -40,5 +44,5 @@ java {
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(25)
 }

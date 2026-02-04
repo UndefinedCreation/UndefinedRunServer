@@ -181,8 +181,6 @@ abstract class RunServerTask : AbstractServer() {
             }
         }
 
-
-
         if (download == null || download.resultType == DownloadResultType.SUCCESS) {
             setClass(download?.jarFile ?: File(workingDir, customJarName!!))
 
@@ -208,9 +206,7 @@ abstract class RunServerTask : AbstractServer() {
                 }
             }
 
-            setJvmArgs(jvmFlags)
-
-            println(commandLine.joinToString(" "))
+            jvmArgs(jvmFlags)
 
             super.exec()
         } else {
