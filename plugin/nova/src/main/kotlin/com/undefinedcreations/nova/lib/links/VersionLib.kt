@@ -79,7 +79,9 @@ object VersionLib {
     fun asp(): List<String> {
         val url = URI.create(Repositories.ASP_REPO)
         val versions: MutableSet<String> = mutableSetOf()
-        for (element in JsonParser.parseString(url.toURL().readText()).asJsonArray) versions.addAll(element.asJsonObject["mcVersion"].asJsonArray.map { it.asString })
+        for (element in JsonParser.parseString(
+            url.toURL().readText()
+        ).asJsonArray) versions.addAll(element.asJsonObject["mcVersion"].asJsonArray.map { it.asString })
         return versions.toList()
     }
 
@@ -91,7 +93,9 @@ object VersionLib {
     fun leaf(): List<String> {
         val url = URI.create(Repositories.LEAF_REPO)
         val versions: MutableSet<String> = mutableSetOf()
-        for (element in JsonParser.parseString(url.toURL().readText()).asJsonObject.get("versions").asJsonArray) versions.add(element.asString)
+        for (element in JsonParser.parseString(
+            url.toURL().readText()
+        ).asJsonObject.get("versions").asJsonArray) versions.add(element.asString)
         return versions.toList()
     }
 
@@ -112,8 +116,12 @@ object VersionLib {
     private fun paperRepoVersions(projectName: String): List<String> {
         val url = URI("${Repositories.PAPERMC_REPO}/$projectName")
         val versions = JsonParser.parseString(url.toURL().readText())
-            .asJsonObject.getAsJsonArray("versions")
-        return versions.map { it.asString }
+            .asJsonObject.getAsJsonObject("versions") ?: error("here 1!")
+        return versions.asMap()
+            .values
+            .flatMap { jsonElement ->
+                jsonElement.asJsonArray.map { it.asString }
+            }
     }
 
 }

@@ -69,6 +69,7 @@ object DownloadLib {
      */
     fun hytaleJar(folder: File) =
         downloadFromHytaleJarUndefinedCreations(folder)
+
     /**
      * This method is used to download hytale assets.
      *
@@ -101,7 +102,7 @@ object DownloadLib {
      * @param folder The folder to download the jar to
      * @param minecraftVersion The minecraft version target
      */
-    fun leaf(folder: File, minecraftVersion: String): DownloadResult  {
+    fun leaf(folder: File, minecraftVersion: String): DownloadResult {
         val information = URI.create("${Repositories.LEAF_REPO}/versions/$minecraftVersion")
         val input = information.toURL().readText()
         val json = JsonParser.parseString(input)
@@ -109,7 +110,11 @@ object DownloadLib {
 
         val fileName = "leaf-$minecraftVersion-$lastestBuild.jar"
 
-        return downloadFile(folder, "${Repositories.LEAF_REPO}/versions/$minecraftVersion/builds/$lastestBuild/downloads/$fileName", fileName)
+        return downloadFile(
+            folder,
+            "${Repositories.LEAF_REPO}/versions/$minecraftVersion/builds/$lastestBuild/downloads/$fileName",
+            fileName
+        )
     }
 
     /**
@@ -127,7 +132,8 @@ object DownloadLib {
         val json = JsonParser.parseString(result).asJsonObject
         val id = UUID.fromString(json["id"].asString)
         val files = json["files"].asJsonArray
-        val fileId = UUID.fromString(files.first { "server" in it.asJsonObject["fileName"].asString }.asJsonObject["id"].asString)
+        val fileId =
+            UUID.fromString(files.first { "server" in it.asJsonObject["fileName"].asString }.asJsonObject["id"].asString)
 
         return downloadFile(folder, "${Repositories.ASP_REPO}/$id/download/$fileId", "AdvancedSlimePaper.jar")
     }
@@ -158,12 +164,16 @@ object DownloadLib {
      * @param projectName The project name to download from the repository
      */
     private fun downloadFromPaperMCRepo(folder: File, minecraftVersion: String, projectName: String): DownloadResult {
-        val url = URI("${Repositories.PAPERMC_REPO}/$projectName/versions/$minecraftVersion")
-        val builds = JsonParser.parseString(url.toURL().readText())
-            .asJsonObject.getAsJsonArray("builds")
-        val latestBuild = builds.last().asInt
+        val url = URI("${Repositories.PAPERMC_REPO}/$projectName/versions/$minecraftVersion/builds/latest")
+        val downloadURL = JsonParser.parseString(url.toURL().readText())
+            .asJsonObject.getAsJsonObject("downloads").getAsJsonObject("server:default")
+            .getAsJsonPrimitive("url").asString
 
-        return downloadFile(folder, "$url/builds/$latestBuild/downloads/$projectName-$minecraftVersion-$latestBuild.jar", "$projectName.jar")
+        return downloadFile(
+            folder,
+            downloadURL,
+            "$projectName.jar"
+        )
     }
 
     /**
@@ -173,7 +183,11 @@ object DownloadLib {
      * @param minecraftVersion The jar version to download
      */
     private fun downloadFromSpigotUndefinedCreations(folder: File, minecraftVersion: String): DownloadResult =
-        downloadFile(folder, "${Repositories.UNDEFINEDCREATIONS_REPO}/spigotmc/spigot-$minecraftVersion.jar", "spigot.jar")
+        downloadFile(
+            folder,
+            "${Repositories.UNDEFINEDCREATIONS_REPO}/spigotmc/spigot-$minecraftVersion.jar",
+            "spigot.jar"
+        )
 
     /**
      * This method is used to download file from the UndefinedCreations repository.
@@ -207,7 +221,7 @@ object DownloadLib {
                 Thread {
                     val partUrl = "$baseUrl.part$partNumber"
                     val partFile = File(tempFolder, "Assets.part$partNumber")
-                    
+
                     URI(partUrl).toURL().openStream().use { input ->
                         FileOutputStream(partFile).use { output ->
                             input.copyTo(output)
@@ -217,7 +231,7 @@ object DownloadLib {
             }.also { threads ->
                 threads.forEach { it.start() }
                 threads.forEach { it.join() }
-            }.mapIndexed { index, _ -> 
+            }.mapIndexed { index, _ ->
                 File(tempFolder, "Assets.part${index + 1}")
             }
 
@@ -232,12 +246,12 @@ object DownloadLib {
 
             partFiles.forEach { it.delete() }
             tempFolder.delete()
-            
+
             return DownloadResult(DownloadResultType.SUCCESS, null, outputFile)
         } catch (exception: Exception) {
             tempFolder.listFiles()?.forEach { it.delete() }
             tempFolder.delete()
-            
+
             return DownloadResult(DownloadResultType.FAILED, exception.message, null)
         }
     }
@@ -269,6 +283,7 @@ object DownloadLib {
             DownloadResult(DownloadResultType.SUCCESS, null, file)
         } else {
             try {
+                println(downloadURL)
                 downloadURL.toURL().openStream().use { input ->
                     FileOutputStream(file).use { output ->
                         input.copyTo(output)

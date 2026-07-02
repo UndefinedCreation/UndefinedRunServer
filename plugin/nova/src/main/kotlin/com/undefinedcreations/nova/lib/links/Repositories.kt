@@ -10,7 +10,7 @@ object Repositories {
     /**
      * The PaperMC repository to download papermc, velocity, folia, waterfall
      */
-    const val PAPERMC_REPO = "https://api.papermc.io/v2/projects"
+    const val PAPERMC_REPO = "https://fill.papermc.io/v3/projects"
 
     /**
      * The UndefinedCreations repository to download spigotmc and hytale
@@ -20,7 +20,8 @@ object Repositories {
     /**
      * The md5 repository to download Bungeecord
      */
-    const val BUNGEECORD_REPO = "https://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/artifact/bootstrap/target/BungeeCord.jar"
+    const val BUNGEECORD_REPO =
+        "https://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/artifact/bootstrap/target/BungeeCord.jar"
 
     /**
      * The Purpur repository to download Purpur
